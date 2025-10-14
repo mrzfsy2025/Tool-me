@@ -12,7 +12,7 @@ async function fetchHtml(url, method) {
         case 'SERVER_PROXY':
             // Metode Proxy Server Sendiri: Meminta ke backend kita sendiri.
             // PENTING: Anda harus punya server backend yang berjalan di '/proxy'
-            requestUrl = `/proxy?url=${encodeURIComponent(url)}`;
+            requestUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
             console.log("Mencoba via proxy server sendiri...");
             break;
 
