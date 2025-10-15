@@ -1,12 +1,11 @@
 // File: server.js
-// Ini adalah backend proxy "sopan" kita
 
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
 
 const app = express();
-const PORT = 8080; // Kita akan jalankan server di port 3000
+const PORT = 8080; // Kita akan jalankan server di port 8080
 
 // Sajikan file statis (index.html dan scraper.js) dari folder publik
 app.use(express.static(path.join(__dirname, 'public')));
@@ -49,9 +48,8 @@ app.get('/api/proxy', async (req, res) => {
     }
 });
 
-
-// Jalankan server
 app.listen(PORT, () => {
-    console.log(`🚀 Server proxy berjalan di http://localhost:${PORT}`);
     console.log('Buka browser dan akses halaman utama untuk memulai scraping.');
+    console.log(`🚀 Server proxy berjalan di http://localhost:${PORT}`);
+
 });
