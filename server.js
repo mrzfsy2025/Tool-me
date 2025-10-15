@@ -1,40 +1,57 @@
-// server.js
-const express = require('express');
-const app = express();
-const PORT = 8080;
+// File: server.js
+// Ini adalah backend proxy "sopan" kita
 
-app.get('/proxy', async (req, res) => {
+const express = require('express');
+const axios = require('axios');
+const path = require('path');
+
+const app = express();
+const PORT = 8080; // Kita akan jalankan server di port 3000
+
+// Sajikan file statis (index.html dan scraper.js) dari folder publik
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+// Ini adalah endpoint proxy yang akan dipanggil oleh scraper.js
+app.get('/api/proxy', async (req, res) => {
     const targetUrl = req.query.url;
 
     if (!targetUrl) {
-        return res.status(400).send('Parameter "url" dibutuhkan.');
+        return res.status(400).send({ message: 'URL target diperlukan' });
     }
 
-    // Blok try...catch yang baru ada di sini
+    console.log(`Menerima permintaan proxy untuk: ${targetUrl}`);
+
     try {
+        // Ekstrak domain utama untuk digunakan sebagai Referer
+        const urlObject = new URL(targetUrl);
+        const referer = urlObject.origin; // Contoh: https://www.nama-situs.com
+
+        // Di sinilah "kesopanan" terjadi! Kita atur headers-nya.
         const response = await axios.get(targetUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                // Mengaku sebagai browser Chrome di Windows
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+                // Memberitahu kita datang dari halaman utama situs itu sendiri
+                'Referer': referer,
+                // Header tambahan agar terlihat lebih natural
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,id;q=0.8',
             }
         });
 
-        // INI BAGIAN PENTING YANG DITAMBAHKAN UNTUK DEBUGGING
-        console.log('--- HTML Mentah yang Diterima Server ---');
-        console.log(response.data.substring(0, 1000)); // Tampilkan 1000 karakter pertama
-        console.log('------------------------------------');
-
+        // Kirim kembali HTML yang didapat ke frontend (scraper.js)
         res.send(response.data);
 
     } catch (error) {
-        console.error('Proxy Error:', error.message);
-        res.status(500).send(`Gagal mengambil data dari URL: ${error.message}`);
+        console.error('Kesalahan pada proxy:', error.message);
+        res.status(500).send({ message: `Gagal mengambil data dari server tujuan: ${error.message}` });
     }
 });
 
-// Baris ini adalah satu-satunya 'pekerjaan' server:
-// Menyajikan semua file yang ada di dalam folder ini (index.html, scraper.js, dll).
-app.use(express.static('.'));
-// Menjalankan server agar bisa diakses
+
+// Jalankan server
 app.listen(PORT, () => {
-    console.log(`🚀 Server minimal berjalan di http://localhost:${PORT}`);
+    console.log(`🚀 Server proxy berjalan di http://localhost:${PORT}`);
+    console.log('Buka browser dan akses halaman utama untuk memulai scraping.');
 });
